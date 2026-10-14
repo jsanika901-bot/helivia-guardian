@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HELIVIA — Help Finds You"
+description = "A mobile-first safety and emergency-assistance prototype with four emergency actions, trusted contacts, optional medical profile, arrival check-ins, privacy controls, and a locally stored demo activity timeline."
+version = "1.0.0"
+id = "artifacts/helivia"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22188
+
+[services.development]
+run = "pnpm --filter @workspace/helivia run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/helivia", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/helivia/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22188"
+BASE_PATH = "/"
