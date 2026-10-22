@@ -1,4 +1,4 @@
-import { Activity as ActivityIcon, Check, CircleHelp, HeartPulse, ShieldAlert } from 'lucide-react';
+import { Activity as ActivityIcon, Check, CircleHelp, HeartPulse, Radio, Route, ShieldAlert } from 'lucide-react';
 import type { Activity } from '../context/app-state';
 
 function formatTime(value: string) {
@@ -31,6 +31,10 @@ export function ActivityList({ items }: { items: Activity[] }) {
       {items.map((item) => {
         const Icon = item.type === 'safe-arrival'
           ? Check
+          : item.type === 'nearby-sos'
+            ? Radio
+            : item.type === 'journey-check-in'
+              ? Route
           : item.type === 'profile'
             ? HeartPulse
             : item.type === 'red-help' || item.type === 'yellow-help'

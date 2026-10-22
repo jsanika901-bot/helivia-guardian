@@ -1,5 +1,5 @@
-import { Link } from 'wouter';
-import { Check, Flame, HeartPulse, ShieldAlert, ShieldCheck, UsersRound } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
+import { Check, Flame, HeartPulse, ShieldAlert, ShieldCheck, UsersRound, Radio, Route, MessageCircle } from 'lucide-react';
 import { useAppState } from '../context/app-state';
 import { ActivityList } from '../components/activity-list';
 import { PageHeading, SectionHeading } from '../components/ui-parts';
@@ -40,8 +40,14 @@ const actions = [
 ];
 
 export default function Dashboard() {
-  const { activity, contacts } = useAppState();
+  const { activity, contacts, activateRedHelp } = useAppState();
+  const [, setLocation] = useLocation();
   const recentItems = activity.slice(0, 3);
+
+  function startRedHelp() {
+    const event = activateRedHelp();
+    setLocation(`/emergency/red-help?eventId=${encodeURIComponent(event.id)}`);
+  }
 
   return (
     <div className="page-content">
@@ -66,7 +72,22 @@ export default function Dashboard() {
       />
       <div className="action-grid" aria-label="Safety actions">
         {actions.map(({ key, label, hint, icon: Icon, tone, href }) => (
-          <Link
+          key === 'red-help' ? (
+          <button
+            key={key}
+            type="button"
+            onClick={startRedHelp}
+            className={`action-card ${tone}`}
+            data-testid={`action-${key}`}
+            aria-label={`${label}. ${hint}`}
+          >
+            <span className="action-icon"><Icon aria-hidden="true" /></span>
+            <span>
+              <span className="action-label">{label}</span>
+              <span className="action-hint">{hint}</span>
+            </span>
+          </button>
+          ) : <Link
             key={key}
             href={href}
             className={`action-card ${tone}`}
@@ -80,6 +101,27 @@ export default function Dashboard() {
             </span>
           </Link>
         ))}
+      </div>
+
+      <section className="nearby-feature panel" data-testid="feature-nearby-sos">
+        <div className="nearby-orbit" aria-hidden="true"><Radio size={23} /></div>
+        <div className="nearby-feature-copy">
+          <div className="eyebrow">Local demo feature</div>
+          <h2 className="section-title">10-Meter Nearby SOS</h2>
+          <p className="section-caption">Explore a simulated nearby-user workflow. Demo profiles only; no alert is sent.</p>
+        </div>
+        <button className="button secondary nearby-feature-action" type="button" onClick={startRedHelp} data-testid="button-start-nearby-sos">
+          Open RED HELP
+        </button>
+      </section>
+
+      <div className="dashboard-shortcuts">
+        <Link href="/journeys" className="shortcut-link" data-testid="link-dashboard-journeys">
+          <Route size={18} aria-hidden="true" /><span><strong>Journey check-ins</strong><small>Set an expected arrival and keep the next step visible.</small></span>
+        </Link>
+        <Link href="/guardian" className="shortcut-link" data-testid="link-dashboard-guardian">
+          <MessageCircle size={18} aria-hidden="true" /><span><strong>Guardian Assistant</strong><small>Try local, command-driven demo actions.</small></span>
+        </Link>
       </div>
 
       <div className="content-grid">

@@ -13,6 +13,8 @@ import EmergencyPage from '@/pages/emergency';
 import CheckInPage from '@/pages/check-in';
 import ActivityPage from '@/pages/activity';
 import PrivacyPage from '@/pages/privacy';
+import JourneysPage from '@/pages/journeys';
+import GuardianPage from '@/pages/guardian';
 import {
   Route,
   Switch,
@@ -36,6 +38,8 @@ function Router() {
           <Route path="/check-in" component={CheckInPage} />
           <Route path="/activity" component={ActivityPage} />
           <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/journeys" component={JourneysPage} />
+          <Route path="/guardian" component={GuardianPage} />
           <Route component={NotFound} />
         </Switch>
       </AppShell>

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Activity, HeartPulse, House, LockKeyhole, MapPinCheck, Shield, UsersRound } from 'lucide-react';
+import { Activity, HeartPulse, House, LockKeyhole, MapPinCheck, Shield, UsersRound, Route, MessageCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 const navigation = [
@@ -9,11 +9,13 @@ const navigation = [
   { href: '/check-in', label: 'Safe arrival', shortLabel: 'Check-in', icon: MapPinCheck },
   { href: '/activity', label: 'Activity', shortLabel: 'Activity', icon: Activity },
   { href: '/privacy', label: 'Privacy', shortLabel: 'Privacy', icon: LockKeyhole },
+  { href: '/journeys', label: 'Journey check-ins', shortLabel: 'Journeys', icon: Route },
+  { href: '/guardian', label: 'Guardian Assistant', shortLabel: 'Assistant', icon: MessageCircle },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const current = navigation.find((item) => item.href === location) ?? navigation[0];
+  const current = navigation.find((item) => item.href === location) ?? navigation.find((item) => location.startsWith('/emergency/')) ?? navigation[0];
 
   return (
     <div className="app-shell">

@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Link, useRoute } from 'wouter';
-import { ArrowLeft, Check, Flame, HeartPulse, MapPin, ShieldAlert } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useRoute, useLocation } from 'wouter';
+import { ArrowLeft, Check, Flame, HeartPulse, MapPin, ShieldAlert, Radio, UsersRound } from 'lucide-react';
 import { PageHeading } from '../components/ui-parts';
-import { useAppState, type EmergencyType } from '../context/app-state';
+import { useAppState, type EmergencyType, type NearbySosEvent } from '../context/app-state';
 
 const details: Record<Exclude<EmergencyType, 'blue-check-in'>, {
   title: string;
@@ -45,12 +45,33 @@ export default function EmergencyPage() {
   const [, params] = useRoute('/emergency/:type');
   const emergencyType = params?.type as Exclude<EmergencyType, 'blue-check-in'> | undefined;
   const detail = emergencyType && emergencyType in details ? details[emergencyType] : details['red-help'];
-  const { addActivity, privacy } = useAppState();
+  const { addActivity, privacy, activateRedHelp, nearbySosEvents } = useAppState();
+  const [locationPath] = useLocation();
   const [timestamp] = useState(() => new Date());
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState('');
   const [saved, setSaved] = useState(false);
+  const eventId = new URLSearchParams(window.location.search).get('eventId');
+  const [sosEvent, setSosEvent] = useState<NearbySosEvent | null>(() => (
+    emergencyType === 'red-help' && eventId
+      ? nearbySosEvents.find((event) => event.id === eventId) ?? null
+      : null
+  ));
+  const createdForRoute = useRef<string | null>(null);
   const Icon = detail.icon;
+
+  useEffect(() => {
+    if (emergencyType !== 'red-help') return;
+    const selected = eventId ? nearbySosEvents.find((event) => event.id === eventId) : null;
+    if (selected) {
+      setSosEvent(selected);
+      return;
+    }
+    if (createdForRoute.current !== locationPath) {
+      createdForRoute.current = locationPath;
+      setSosEvent(activateRedHelp());
+    }
+  }, [emergencyType, eventId, nearbySosEvents, activateRedHelp, locationPath]);
 
   function requestLocation() {
     if (!privacy.locationEnabled) {
@@ -108,9 +129,45 @@ export default function EmergencyPage() {
         </section>
 
         {emergencyType === 'red-help' && (
-          <div className="alert-note" style={{ marginTop: 16 }} role="alert">
-            HELIVIA cannot call emergency services. If you need urgent help, contact your local emergency number directly when safe.
-          </div>
+          <>
+            <div className="alert-note" style={{ marginTop: 16 }} role="alert" data-testid="notice-red-help-safety">
+              HELIVIA cannot call emergency services. If you need urgent help, contact your local emergency number directly when safe.
+            </div>
+            {sosEvent && <section className="panel nearby-event-panel" data-testid="panel-nearby-sos-event">
+              <div className="nearby-event-header">
+                <span className="nearby-orbit"><Radio size={22} aria-hidden="true" /></span>
+                <div>
+                  <div className="eyebrow">10-Meter Nearby SOS</div>
+                  <h2 className="section-title">Local event created</h2>
+                  <p className="section-caption">No countdown. This event and workflow are simulated on this device only.</p>
+                </div>
+              </div>
+              <div className="nearby-facts">
+                <div><span>Radius</span><strong data-testid="value-sos-radius">{sosEvent.radiusMeters} meters</strong></div>
+                <div><span>Provider mode</span><strong data-testid="value-sos-provider">{sosEvent.providerMode === 'demo' ? 'Demo simulator' : sosEvent.providerMode}</strong></div>
+                <div><span>Event reference</span><strong className="event-id">{sosEvent.id}</strong></div>
+              </div>
+              <div className="nearby-truth-note" data-testid="status-sos-no-alert">
+                Simulated users only. No alert was sent, and no person or service was contacted.
+              </div>
+              <h3 className="nearby-list-title"><UsersRound size={16} aria-hidden="true" /> Simulated nearby profiles</h3>
+              {sosEvent.detections.length ? <div className="nearby-record-list">
+                {sosEvent.detections.map((detection) => {
+                  const delivery = sosEvent.deliveries.find((item) => item.userId === detection.userId);
+                  return <article className="nearby-record" key={detection.userId} data-testid={`nearby-detection-${detection.userId}`}>
+                    <div className="nearby-record-heading">
+                      <strong>{detection.label}</strong><span className="sample-tag">{detection.simulated ? 'Simulated' : 'Provider record'}</span>
+                    </div>
+                    <p>{detection.distanceMeters} m away · {detection.source === 'demo-simulator' ? 'demo simulator' : 'provider source'}</p>
+                    <div className="delivery-state" data-testid={`delivery-status-${detection.userId}`}>
+                      Delivery: {delivery?.status === 'simulated-not-sent' ? 'simulated — not sent' : delivery?.status ?? 'no delivery record'}
+                    </div>
+                    {delivery && <small>{delivery.detail}</small>}
+                  </article>;
+                })}
+              </div> : <div className="empty-state" data-testid="empty-sos-detections">No simulated profiles in this event radius.</div>}
+            </section>}
+          </>
         )}
 
         <section className="panel panel-pad" style={{ marginTop: 16 }}>
